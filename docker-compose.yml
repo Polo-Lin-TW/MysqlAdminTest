@@ -1,0 +1,89 @@
+# Docker Compose for MySQL Admin Test
+
+services:
+  # MySQL Database service (using existing external database)
+  # Note: Using external MySQL database car-mysql from .env
+  # If you want to use the embedded MySQL, uncomment below:
+  # mysql-admin-db:
+  #   image: mysql:8.0
+  #   container_name: mysql-admin-db
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+  #     - MYSQL_DATABASE=testdb
+  #     - MYSQL_USER=${MYSQL_USER}
+  #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+  #   ports:
+  #     - "3307:3306"  # Changed to avoid conflict with car-mysql
+  #   networks:
+  #     - mysql-admin-network
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #   restart: unless-stopped
+  # Backend FastAPI service
+  mysql-admin-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mysql-admin-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - MYSQL_HOST=car-mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=oa-admin
+      - MYSQL_PASSWORD=Bdfrost168
+      - MYSQL_DATABASE=oa
+      - MYSQL_ROOT_PASSWORD=Y05os@5352
+    env_file:
+      - .env
+    networks:
+      - mysql-admin-network
+    external_links:
+      - car-mysql
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Frontend Vue.js + Nginx service  
+  mysql-admin-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mysql-admin-frontend
+    ports:
+      - "8081:8081"
+    environment:
+      - BACKEND_HOST=mysql-admin-backend
+      - BACKEND_PORT=8000
+    networks:
+      - mysql-admin-network
+    depends_on:
+      mysql-admin-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  mysql-admin-network:
+    driver: bridge
+
+volumes:
+  # Add volumes here if needed for persistent data
+  mysql-data:
+    driver: local

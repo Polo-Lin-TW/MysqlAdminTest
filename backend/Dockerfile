@@ -5,16 +5,16 @@ FROM python:3.10-alpine
 WORKDIR /app
 
 # Copy requirements file first for better Docker layer caching
-COPY ../requirements.txt .
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source code
+# Copy backend source code only
 COPY . .
 
 # Expose backend port
-EXPOSE 8001
+EXPOSE 8000
 
 # Health check - using the root endpoint since there's no dedicated health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
