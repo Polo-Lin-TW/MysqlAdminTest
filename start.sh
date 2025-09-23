@@ -11,8 +11,8 @@ case "$1" in
         docker-compose up -d --build
         echo "✅ Containers started!"
         echo "🌐 Frontend: http://localhost:8081"
-        echo "⚙️  Backend API: http://localhost:8000"
-        echo "📚 API Docs: http://localhost:8000/docs"
+        echo "⚙️  Backend API: http://localhost:8001"
+        echo "📚 API Docs: http://localhost:8001/docs"
         ;;
     "down"|"stop")
         echo "🛑 Stopping MySQL Admin containers..."
@@ -25,7 +25,7 @@ case "$1" in
         docker-compose up -d --build
         echo "✅ Containers restarted!"
         echo "🌐 Frontend: http://localhost:8081"
-        echo "⚙️  Backend API: http://localhost:8000"
+        echo "⚙️  Backend API: http://localhost:8001"
         ;;
     "logs")
         echo "📋 Showing container logs..."

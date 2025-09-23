@@ -9,7 +9,7 @@ app = FastAPI(title="MySQL Admin API", version="1.0.0")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:8081"],  # Vue dev server
+    allow_origins=["*"],  # Vue dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
