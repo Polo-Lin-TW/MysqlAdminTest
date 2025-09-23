@@ -30,7 +30,7 @@ COPY nginx.conf /etc/nginx/nginx.conf.template
 
 # Set default environment variables
 ENV BACKEND_HOST=mysql-admin-backend
-ENV BACKEND_PORT=8000
+ENV BACKEND_PORT=8001
 
 # Expose port 8080
 EXPOSE 8081

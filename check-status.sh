@@ -10,10 +10,10 @@ docker-compose ps
 echo ""
 echo "🌐 Testing Services:"
 
-echo -n "  Backend (http://localhost:8000): "
-if curl -s http://localhost:8000 > /dev/null 2>&1; then
+echo -n "  Backend (http://localhost:8001): "
+if curl -s http://localhost:8001 > /dev/null 2>&1; then
     echo "✅ Running"
-    BACKEND_RESPONSE=$(curl -s http://localhost:8000)
+    BACKEND_RESPONSE=$(curl -s http://localhost:8001)
     echo "    Response: $BACKEND_RESPONSE"
 else
     echo "❌ Not responding"
@@ -29,8 +29,8 @@ fi
 echo ""
 echo "🔗 Access URLs:"
 echo "  🌐 Frontend (Web UI): http://localhost:8081"
-echo "  ⚙️  Backend API: http://localhost:8000"
-echo "  📚 API Documentation: http://localhost:8000/docs"
+echo "  ⚙️  Backend API: http://localhost:8001"
+echo "  📚 API Documentation: http://localhost:8001/docs"
 
 echo ""
 echo "📋 Recent logs:"
