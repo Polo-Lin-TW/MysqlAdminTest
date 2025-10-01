@@ -15,9 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "MySQL Admin API"}
+
 
 @app.get("/users", response_model=List[UserInfo])
 async def get_users():
@@ -54,47 +56,57 @@ async def get_users():
         print(f"Error in get_users: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
 
+
 @app.get("/databases", response_model=List[DatabaseInfo])
 async def get_databases():
     """獲取數據庫列表"""
     query = "SHOW DATABASES"
-    
+
     try:
         result = db.execute_query(query)
         if result is None:
             raise HTTPException(status_code=500, detail="Database connection failed")
-        
+
         databases = []
         for row in result:
             # SHOW DATABASES returns different column names
-            db_name = row.get('Database') or row.get('database') or list(row.values())[0]
+            db_name = (
+                row.get("Database") or row.get("database") or list(row.values())[0]
+            )
             databases.append(DatabaseInfo(name=db_name))
-        
+
         return databases
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching databases: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching databases: {str(e)}"
+        )
+
 
 @app.get("/databases/{database_name}/tables", response_model=List[TableInfo])
 async def get_tables(database_name: str):
     """獲取指定數據庫的表列表"""
     query = f"SHOW TABLES FROM `{database_name}`"
-    
+
     try:
         result = db.execute_query(query, database=database_name)
         if result is None:
             raise HTTPException(status_code=500, detail="Database connection failed")
-        
+
         tables = []
         for row in result:
             # SHOW TABLES returns different column names depending on database
             table_name = list(row.values())[0]  # Get the first (and only) value
             tables.append(TableInfo(name=table_name, database=database_name))
-        
+
         return tables
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching tables: {str(e)}")
 
-@app.get("/databases/{database_name}/tables/{table_name}/structure", response_model=List[ColumnInfo])
+
+@app.get(
+    "/databases/{database_name}/tables/{table_name}/structure",
+    response_model=List[ColumnInfo],
+)
 async def get_table_structure(database_name: str, table_name: str):
     """獲取表結構"""
     query = f"""
@@ -109,22 +121,27 @@ async def get_table_structure(database_name: str, table_name: str):
     WHERE TABLE_SCHEMA = '{database_name}' AND TABLE_NAME = '{table_name}'
     ORDER BY ORDINAL_POSITION
     """
-    
+
     try:
         result = db.execute_query(query)
         if result is None:
             raise HTTPException(status_code=500, detail="Database connection failed")
-        
+
         columns = []
         for row in result:
             columns.append(ColumnInfo(**row))
-        
+
         return columns
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching table structure: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching table structure: {str(e)}"
+        )
+
 
 @app.get("/databases/{database_name}/tables/{table_name}/data")
-async def get_table_data(database_name: str, table_name: str, limit: int = 100, offset: int = 0):
+async def get_table_data(
+    database_name: str, table_name: str, limit: int = 100, offset: int = 0
+):
     """獲取表數據"""
     try:
         # Get table structure first
@@ -140,34 +157,58 @@ async def get_table_data(database_name: str, table_name: str, limit: int = 100, 
         WHERE TABLE_SCHEMA = '{database_name}' AND TABLE_NAME = '{table_name}'
         ORDER BY ORDINAL_POSITION
         """
-        
+
         structure_result = db.execute_query(structure_query)
         if structure_result is None:
             raise HTTPException(status_code=500, detail="Database connection failed")
-        
+
         columns = [ColumnInfo(**row) for row in structure_result]
-        
-        # Get data
-        data_query = f"SELECT * FROM `{database_name}`.`{table_name}` LIMIT {limit} OFFSET {offset}"
+
+        # Get data - Check if table has is_delete column
+        check_column_query = f"""
+        SELECT COUNT(*) as has_column
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{database_name}'
+        AND TABLE_NAME = '{table_name}'
+        AND COLUMN_NAME = 'is_delete'
+        """
+        has_is_delete = db.execute_query(check_column_query)
+
+        # Build query with optional is_delete filter
+        if has_is_delete and has_is_delete[0].get('has_column', 0) > 0:
+            data_query = f"SELECT * FROM `{database_name}`.`{table_name}` WHERE is_delete = 0 LIMIT {limit} OFFSET {offset}"
+        else:
+            data_query = f"SELECT * FROM `{database_name}`.`{table_name}` LIMIT {limit} OFFSET {offset}"
+
         data_result = db.execute_query(data_query, database=database_name)
-        
+
         if data_result is None:
             data_result = []
-        
-        # Get total count
-        count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}`"
+        else:
+            data_result = [dict(row) for row in data_result]
+
+        # Get total count with same filter
+        if has_is_delete and has_is_delete[0].get('has_column', 0) > 0:
+            count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}` WHERE is_delete = 0"
+        else:
+            count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}`"
+
         count_result = db.execute_query(count_query, database=database_name)
-        total_rows = count_result[0]['total'] if count_result else 0
-        
-        return TableData(
-            columns=columns,
-            rows=data_result,
-            total_rows=total_rows
+        total_rows = (
+            count_result[0].get("total", 0)
+            if count_result and len(count_result) > 0
+            else 0
         )
-        
+
+        return TableData(columns=columns, rows=data_result, total_rows=total_rows)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching table data: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching table data: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

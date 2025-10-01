@@ -45,8 +45,7 @@ services:
       - .env
     networks:
       - mysql-admin-network
-    external_links:
-      - car-mysql
+      - kinit-practice_car_network
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/')"]
       interval: 30s
@@ -82,6 +81,8 @@ services:
 networks:
   mysql-admin-network:
     driver: bridge
+  kinit-practice_car_network:
+    external: true
 
 volumes:
   # Add volumes here if needed for persistent data
