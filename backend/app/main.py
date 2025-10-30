@@ -175,7 +175,7 @@ async def get_table_data(
         has_is_delete = db.execute_query(check_column_query)
 
         # Build query with optional is_delete filter
-        if has_is_delete and has_is_delete[0].get('has_column', 0) > 0:
+        if has_is_delete and has_is_delete[0].get("has_column", 0) > 0:
             data_query = f"SELECT * FROM `{database_name}`.`{table_name}` WHERE is_delete = 0 LIMIT {limit} OFFSET {offset}"
         else:
             data_query = f"SELECT * FROM `{database_name}`.`{table_name}` LIMIT {limit} OFFSET {offset}"
@@ -188,10 +188,12 @@ async def get_table_data(
             data_result = [dict(row) for row in data_result]
 
         # Get total count with same filter
-        if has_is_delete and has_is_delete[0].get('has_column', 0) > 0:
+        if has_is_delete and has_is_delete[0].get("has_column", 0) > 0:
             count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}` WHERE is_delete = 0"
         else:
-            count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}`"
+            count_query = (
+                f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}`"
+            )
 
         count_result = db.execute_query(count_query, database=database_name)
         total_rows = (

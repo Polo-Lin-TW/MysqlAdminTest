@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 // Use relative URL to leverage nginx proxy configuration
-// const API_BASE_URL = '/api'
-const API_BASE_URL = 'http://localhost:8001'
+const API_BASE_URL = '/api'
+// const API_BASE_URL = 'http://localhost:8001'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
