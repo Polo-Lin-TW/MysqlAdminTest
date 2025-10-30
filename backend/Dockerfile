@@ -17,7 +17,7 @@ COPY . .
 RUN mkdir -p /app/data
 
 # Set default environment variables
-ENV MYSQL_HOST=car-mysql1 \
+ENV MYSQL_HOST=car-mysql \
     MYSQL_PORT=3306 \
     MYSQL_USER=oa-admin \
     MYSQL_PASSWORD=Bdfrost168 \
