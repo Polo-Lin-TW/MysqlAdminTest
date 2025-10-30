@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # 設置環境變數 (優先使用環境變數,如果沒有則使用預設值)
-export MYSQL_HOST=${MYSQL_HOST:-car-mysql1}
+export MYSQL_HOST=${MYSQL_HOST:-car-mysql}
 export MYSQL_PORT=${MYSQL_PORT:-3306}
 export MYSQL_USER=${MYSQL_USER:-oa-admin}
 export MYSQL_PASSWORD=${MYSQL_PASSWORD:-Bdfrost168}
