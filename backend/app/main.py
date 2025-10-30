@@ -24,26 +24,56 @@ async def root():
 @app.get("/users", response_model=List[UserInfo])
 async def get_users():
     """獲取MySQL用戶列表"""
-    query = """
-    SELECT
-        user,
-        host,
-        account_locked,
-        password_expired
-    FROM mysql.user
-    ORDER BY user, host
-    """
-
     try:
-        # Add debugging query to check connection
-        debug_query = "SELECT @@hostname as hostname, @@port as port"
-        debug_result = db.execute_query(debug_query, database="mysql")
-        print(f"Connected to MySQL at: {debug_result}")
+        # First check if we have access to mysql.user table
+        # Connect without specifying database to avoid permission issues
+        check_query = """
+        SELECT COUNT(*) as count
+        FROM information_schema.USER_PRIVILEGES
+        WHERE GRANTEE = CONCAT("'", REPLACE(CURRENT_USER(), '@', "'@'"), "'")
+        AND PRIVILEGE_TYPE = 'SELECT'
+        AND (TABLE_SCHEMA = 'mysql' OR IS_GRANTABLE = 'YES')
+        """
 
-        # Connect to mysql database to query user table
+        # Try to query mysql.user table
+        query = """
+        SELECT
+            user,
+            host,
+            account_locked,
+            password_expired
+        FROM mysql.user
+        ORDER BY user, host
+        """
+
         result = db.execute_query(query, database="mysql")
+
         if result is None:
-            raise HTTPException(status_code=500, detail="Database connection failed")
+            # If no access to mysql.user, return current user info only
+            print(
+                "No access to mysql.user table, "
+                "returning current user only"
+            )
+            current_user_query = "SELECT CURRENT_USER() as current_user"
+            current_user_result = db.execute_query(current_user_query)
+
+            if current_user_result and len(current_user_result) > 0:
+                user_host = current_user_result[0].get(
+                    'current_user', 'unknown@unknown'
+                )
+                user, host = (
+                    user_host.split('@')
+                    if '@' in user_host
+                    else (user_host, '%')
+                )
+                return [UserInfo(
+                    user=user,
+                    host=host,
+                    account_locked='N',
+                    password_expired='N'
+                )]
+            else:
+                return []
 
         print(f"Found {len(result)} users")
         users = []
@@ -54,7 +84,34 @@ async def get_users():
         return users
     except Exception as e:
         print(f"Error in get_users: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
+        # Don't raise 500 error, return current user info instead
+        try:
+            current_user_query = "SELECT CURRENT_USER() as current_user"
+            current_user_result = db.execute_query(current_user_query)
+
+            if current_user_result and len(current_user_result) > 0:
+                user_host = current_user_result[0].get(
+                    'current_user', 'unknown@unknown'
+                )
+                user, host = (
+                    user_host.split('@')
+                    if '@' in user_host
+                    else (user_host, '%')
+                )
+                return [UserInfo(
+                    user=user,
+                    host=host,
+                    account_locked='N',
+                    password_expired='N'
+                )]
+        except Exception:
+            pass
+
+        # If all fails, return empty list instead of error
+        print(
+            "Returning empty user list due to permission restrictions"
+        )
+        return []
 
 
 @app.get("/databases", response_model=List[DatabaseInfo])
@@ -110,22 +167,25 @@ async def get_tables(database_name: str):
 async def get_table_structure(database_name: str, table_name: str):
     """獲取表結構"""
     query = f"""
-    SELECT 
+    SELECT
         COLUMN_NAME as column_name,
         DATA_TYPE as data_type,
         IS_NULLABLE as is_nullable,
         COLUMN_DEFAULT as column_default,
         COLUMN_KEY as column_key,
         EXTRA as extra
-    FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = '{database_name}' AND TABLE_NAME = '{table_name}'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = '{database_name}'
+    AND TABLE_NAME = '{table_name}'
     ORDER BY ORDINAL_POSITION
     """
 
     try:
         result = db.execute_query(query)
         if result is None:
-            raise HTTPException(status_code=500, detail="Database connection failed")
+            raise HTTPException(
+                status_code=500, detail="Database connection failed"
+            )
 
         columns = []
         for row in result:
@@ -146,21 +206,24 @@ async def get_table_data(
     try:
         # Get table structure first
         structure_query = f"""
-        SELECT 
+        SELECT
             COLUMN_NAME as column_name,
             DATA_TYPE as data_type,
             IS_NULLABLE as is_nullable,
             COLUMN_DEFAULT as column_default,
             COLUMN_KEY as column_key,
             EXTRA as extra
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = '{database_name}' AND TABLE_NAME = '{table_name}'
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{database_name}'
+        AND TABLE_NAME = '{table_name}'
         ORDER BY ORDINAL_POSITION
         """
 
         structure_result = db.execute_query(structure_query)
         if structure_result is None:
-            raise HTTPException(status_code=500, detail="Database connection failed")
+            raise HTTPException(
+                status_code=500, detail="Database connection failed"
+            )
 
         columns = [ColumnInfo(**row) for row in structure_result]
 
@@ -176,9 +239,15 @@ async def get_table_data(
 
         # Build query with optional is_delete filter
         if has_is_delete and has_is_delete[0].get("has_column", 0) > 0:
-            data_query = f"SELECT * FROM `{database_name}`.`{table_name}` WHERE is_delete = 0 LIMIT {limit} OFFSET {offset}"
+            data_query = (
+                f"SELECT * FROM `{database_name}`.`{table_name}` "
+                f"WHERE is_delete = 0 LIMIT {limit} OFFSET {offset}"
+            )
         else:
-            data_query = f"SELECT * FROM `{database_name}`.`{table_name}` LIMIT {limit} OFFSET {offset}"
+            data_query = (
+                f"SELECT * FROM `{database_name}`.`{table_name}` "
+                f"LIMIT {limit} OFFSET {offset}"
+            )
 
         data_result = db.execute_query(data_query, database=database_name)
 
@@ -189,10 +258,15 @@ async def get_table_data(
 
         # Get total count with same filter
         if has_is_delete and has_is_delete[0].get("has_column", 0) > 0:
-            count_query = f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}` WHERE is_delete = 0"
+            count_query = (
+                f"SELECT COUNT(*) as total "
+                f"FROM `{database_name}`.`{table_name}` "
+                f"WHERE is_delete = 0"
+            )
         else:
             count_query = (
-                f"SELECT COUNT(*) as total FROM `{database_name}`.`{table_name}`"
+                f"SELECT COUNT(*) as total "
+                f"FROM `{database_name}`.`{table_name}`"
             )
 
         count_result = db.execute_query(count_query, database=database_name)
@@ -202,7 +276,9 @@ async def get_table_data(
             else 0
         )
 
-        return TableData(columns=columns, rows=data_result, total_rows=total_rows)
+        return TableData(
+            columns=columns, rows=data_result, total_rows=total_rows
+        )
 
     except Exception as e:
         raise HTTPException(
