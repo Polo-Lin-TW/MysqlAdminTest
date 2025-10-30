@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import { mysqlApi } from '../api.js'
+import { mysqlApi } from '../api.js';
 
 export default {
   name: 'TableViewer',
@@ -99,7 +99,7 @@ export default {
       tableData: [],
       totalRows: 0,
       currentPage: 1,
-      pageSize: 50,
+      pageSize: 20,
       loading: false,
       error: null
     }
