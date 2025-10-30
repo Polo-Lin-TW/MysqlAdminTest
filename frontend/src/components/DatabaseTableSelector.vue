@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import { mysqlApi } from '../api.js'
+import { mysqlApi } from '../api.js';
 
 export default {
   name: 'DatabaseTableSelector',
@@ -74,10 +74,18 @@ export default {
     async fetchDatabases() {
       this.loadingDatabases = true
       this.error = null
-      
+
       try {
         const response = await mysqlApi.getDatabases()
         this.databases = response.data
+
+        // 自動選擇 "oa" 數據庫
+        const oaDatabase = this.databases.find(db => db.name === 'oa')
+        if (oaDatabase) {
+          this.selectedDatabase = 'oa'
+          await this.fetchTables('oa')
+          this.$emit('database-selected', 'oa')
+        }
       } catch (error) {
         this.error = `載入數據庫失敗: ${error.message}`
         console.error('Error fetching databases:', error)
