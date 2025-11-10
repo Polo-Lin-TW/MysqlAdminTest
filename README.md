@@ -2,6 +2,12 @@
 
 一個基於FastAPI和Vue3的MySQL管理工具，可以連接MySQL數據庫並提供Web界面來查看用戶、數據庫、表結構和數據。
 
+## 應用截圖
+
+![MySQL Admin Web App](screenshot/image.png)
+
+*MySQL管理工具的Web界面展示*
+
 ## 功能特性
 
 1. **MySQL連接** - 連接到MySQL數據庫
