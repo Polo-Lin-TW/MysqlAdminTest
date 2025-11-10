@@ -75,58 +75,88 @@ export default {
 .loading {
   text-align: center;
   padding: 20px;
-  color: #666;
+  color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 .error {
   color: #e74c3c;
-  padding: 10px;
-  background-color: #fdf2f2;
-  border: 1px solid #e74c3c;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  padding: 12px 16px;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(4px);
 }
 
 .users-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .users-table th,
 .users-table td {
-  padding: 12px;
+  padding: 14px 16px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .users-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-  color: #333;
+  background: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
-.users-table tr:hover {
-  background-color: #f5f5f5;
+.users-table tbody tr {
+  transition: var(--transition);
+}
+
+.users-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .status-locked {
   color: #e74c3c;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(231, 76, 60, 0.15);
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .status-unlocked {
   color: #27ae60;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(39, 174, 96, 0.15);
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .status-expired {
   color: #f39c12;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(243, 156, 18, 0.15);
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .status-valid {
   color: #27ae60;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(39, 174, 96, 0.15);
+  border-radius: 6px;
+  display: inline-block;
 }
 </style>

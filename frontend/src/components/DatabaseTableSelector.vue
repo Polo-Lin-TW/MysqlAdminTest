@@ -139,7 +139,7 @@ export default {
 .selector-row {
   display: flex;
   gap: 20px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
@@ -151,58 +151,68 @@ export default {
 }
 
 .selector-group label {
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #333;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
 }
 
 .selector-group select {
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
-  transition: border-color 0.3s;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  transition: var(--transition);
+  cursor: pointer;
 }
 
 .selector-group select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 12px var(--glow-color);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .selector-group select:disabled {
-  background-color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.3);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .loading-text {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-style: italic;
 }
 
 .error {
   color: #e74c3c;
-  padding: 10px;
-  background-color: #fdf2f2;
-  border: 1px solid #e74c3c;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  padding: 12px 16px;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(4px);
 }
 
 .selection-info {
-  padding: 10px;
-  background-color: #e8f5e8;
-  border: 1px solid #27ae60;
-  border-radius: 4px;
+  padding: 12px 16px;
+  background: rgba(39, 174, 96, 0.15);
+  border: 1px solid rgba(39, 174, 96, 0.3);
+  border-radius: 10px;
   color: #27ae60;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
 }
 
 @media (max-width: 600px) {
   .selector-row {
     flex-direction: column;
   }
-  
+
   .selector-group {
     min-width: auto;
   }
