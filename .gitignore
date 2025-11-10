@@ -140,7 +140,7 @@ Thumbs.db
 
 # Frontend
 frontend/node_modules/
-frontend/css/
+# frontend/css/
 frontend/dist/
 dist/
 build/
